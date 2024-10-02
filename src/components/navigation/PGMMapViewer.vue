@@ -33,6 +33,8 @@ export default {
       robotPose: null,
       robotIcon: null, // Image object for the robot icon
       canvas: null,
+
+      mapImage: null,     // Image object for the map
     };
   },
   mounted() {
@@ -42,8 +44,11 @@ export default {
 
     this.robotIcon = new Image();
     this.robotIcon.src = './robot-icon.jpg'; // Replace with actual image path
-    this.robotIcon.onload = () => {
-      // Once the image is loaded, we can start drawing when pose data is received
+
+    this.mapImage = new Image();
+    this.mapImage.src = './eva.png'; // Replace with actual map image path
+    this.mapImage.onload = () => {
+      // Once the map is loaded, start subscribing to pose updates
       this.subscribeToPose();
     };
 
@@ -79,9 +84,15 @@ export default {
     // Function to connect to ROSBridge server
     connectToROS() {
       this.ros = new ROSLIB.Ros({
-        url: 'ws://localhost:9090', // Change this to your ROSBridge server URL
+        url: 'ws://192.168.1.38:9090', // Change this to your ROSBridge server URL
       });
-
+      this.ros.getTopics((topics) => {
+        console.log('List of topics:', topics);
+        this.topicsList = topics.topics;  // Store the list of topics (if needed)
+        this.messageTypesList = topics.types; // Store the corresponding message types
+      }, (error) => {
+        console.error('Error fetching topics:', error);
+      });
       // Handle connection events
       this.ros.on('connection', () => {
         this.connectionStatus = 'Connected';
@@ -120,23 +131,25 @@ export default {
     subscribeToPose() {
       this.rosPoseTopic = new ROSLIB.Topic({
         ros: this.ros,
-        name: '/pose_topic',  // Change to the correct pose topic
-        messageType: 'geometry_msgs/Pose', // Update message type if needed
-      });
-
-      // Subscribe to the /pose topic
+        name: '/pose',  // Change to the correct pose topic
+        messageType: 'geometry_msgs/msg/PoseWithCovarianceStamped', // Update message type if needed
+      }
+    );
+        // Subscribe to the /pose topic
       this.rosPoseTopic.subscribe((message) => {
-        console.log('Received pose:', message);
-        this.robotPose = {
-          position: message.position,
-          orientation: message.orientation
-        };
+        console.log('Received pose :',  message);
+        this.robotPose = message.pose.pose;
+
+        // console.log('position:',  message.pose.pose.position.x);
+        console.log('Received pose  this.robotPose:',  this.robotPose);
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); // Clear canvas
         this.drawRobot(this.ctx, this.robotPose, this.robotIcon); // Draw the robot
       });
     },
 
     drawRobot(ctx, pose, icon) {
+      // Draw the map image
+      ctx.drawImage(this.mapImage, 0, 0, ctx.canvas.width, ctx.canvas.height);
       const { position,  orientation} = pose;
 
       // Assuming orientation is a quaternion, we will extract the yaw angle (rotation around the z-axis)
