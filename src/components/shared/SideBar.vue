@@ -2,26 +2,28 @@
   <div class="sidebar">
     <!-- Sidebar Content -->
     <div class="sidebar-content">
+
       <div class="nav-item">
-        <a class="nav-link" href="#">
+        <router-link class="nav-link" to="/">
           <i class="bi bi-house"></i> <!-- Home Icon -->
-        </a>
+        </router-link>
       </div>
       <div class="nav-item">
-        <a class="nav-link" href="#">
+        <router-link class="nav-link" to="/navigation">
           <i class="bi bi-geo-alt"></i> <!-- Navigation Icon -->
-        </a>
+        </router-link>
       </div>
       <div class="nav-item">
-        <a class="nav-link" href="#">
+        <router-link class="nav-link" to="/map-edit">
           <i class="bi bi-map"></i> <!-- Map Icon -->
-        </a>
+        </router-link>
       </div>
       <div class="nav-item">
-        <a class="nav-link" href="#">
+        <router-link class="nav-link" to="/mapping-selection">
           <i class="bi bi-file-earmark-arrow-up-fill"></i> <!-- Edit Icon -->
-        </a>
+        </router-link>
       </div>
+      
     </div>
   </div>
 </template>
