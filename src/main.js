@@ -13,9 +13,9 @@ import MappingAndSelection from '@/components/Mapping/MappingAndSelection.vue';
 // Import language files
 import en from './texts/en.json';
 import fr from './texts/fr.json';
-// import es from './texts/es.json';
-// import de from './texts/de.json';
-// import zh from './texts/zh.json';
+import es from './texts/es.json';
+import de from './texts/de.json';
+import zh from './texts/zh.json';
 
 // Define the routes for the app
 const routes = [
@@ -38,9 +38,9 @@ const i18n = createI18n({
     messages: {
         en,
         fr,
-        // es,
-        // de,
-        // zh,
+        es,
+        de,
+        zh,
     },
 });
 
