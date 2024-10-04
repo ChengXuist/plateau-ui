@@ -21,7 +21,7 @@ export default {
     name: "HomePage",
     data() {
         return {
-            selectedLanguage: localStorage.getItem('selectedLanguage') || 'en', // Load from localStorage or default to 'en'
+            selectedLanguage: localStorage.getItem('locale') || 'en', // Load from localStorage or default to 'en'
             dropdownVisible: false,
             languages: [{
                     code: 'en',
@@ -58,7 +58,7 @@ export default {
             this.$i18n.locale = langCode; // Update the i18n locale
 
             // Save the selected language to localStorage
-            localStorage.setItem('selectedLanguage', langCode);
+            localStorage.setItem('locale', this.selectedLanguage);
         },
         getFlag(langCode) {
             return `./flags/${langCode}.svg`; // Adjust the path to your flag images
@@ -77,9 +77,8 @@ export default {
     mounted() {
         // Add event listener for clicks outside the dropdown
         document.addEventListener('click', this.handleClickOutside);
-
-        // Set the global i18n locale based on localStorage
         this.$i18n.locale = this.selectedLanguage; // Ensure the i18n locale matches the selected language
+        localStorage.setItem('locale', this.selectedLanguage);
     },
     beforeUnmount() {
         // Remove event listener when the component is destroyed
@@ -125,6 +124,5 @@ export default {
 
 .dropdown-item:hover {
     background-color: #f0f0f0;
-    /* Hover effect */
 }
 </style>

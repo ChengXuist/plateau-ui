@@ -38,7 +38,7 @@
 </template>
 
 <script>
-import config from "./configuration/map-configuration.json"; // Import configuration
+import config from "@/assets/configuration/map-configuration.json"; // Import configuration
 
 export default {
     data() {
@@ -96,8 +96,8 @@ export default {
 
 /* Title */
 .title {
-    font-size: 2rem;
-    margin-bottom: 15px;
+    font-size: 1.7rem;
+    margin-bottom: 12px;
     color: #333;
 }
 
@@ -118,7 +118,7 @@ export default {
     background-color: #f0f0f0;
     color: black;
     border: none;
-    padding: 10px 20px;
+    padding: 5px 20px;
     margin: 5px;
     border-radius: 8px;
     cursor: pointer;

@@ -30,10 +30,10 @@ const router = createRouter({
     history: createWebHistory(),
     routes,
 });
-
+const savedLocale = localStorage.getItem('locale') || 'en';
 // Initialize i18n with locale and translations
 const i18n = createI18n({
-    locale: 'en', // Default locale
+    locale: savedLocale, // Default locale
     fallbackLocale: 'en', // Fallback if translation is missing
     messages: {
         en,
