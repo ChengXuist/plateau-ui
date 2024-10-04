@@ -1,6 +1,13 @@
 {
     "mapping": "Cartographie",
-    "mapSelection": "Sélection de carte",
-    "newMapCreation": "Créer une nouvelle carte",
-    "continueMapping": "Continuer la cartographie"
+    "mapSelection": "Sélection de la carte",
+    "newMapCreation": "Création d'une nouvelle carte",
+    "continueMapping": "Continuer la cartographie",
+    "selectMap": "Sélection de la carte",
+    "mapEditor": "Éditeur de carte",
+    "obstacleEditor": "Éditeur d'obstacles",
+    "pathEditor": "Éditeur de chemin",
+    "navigation": "Navigation",
+    "moveTo": "Se déplacer vers",
+    "backToHome": "Retour à l'accueil"
 }

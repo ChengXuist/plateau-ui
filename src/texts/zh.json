@@ -1,6 +1,13 @@
 {
-    "mapping": "映射",
+    "mapping": "地图制作",
     "mapSelection": "地图选择",
-    "newMapCreation": "新地图创建",
-    "continueMapping": "继续映射"
+    "newMapCreation": "新建地图",
+    "continueMapping": "继续制作地图",
+    "selectMap": "地图选择",
+    "mapEditor": "地图编辑器",
+    "obstacleEditor": "障碍物编辑器",
+    "pathEditor": "路径编辑器",
+    "navigation": "导航",
+    "moveTo": "移动到",
+    "backToHome": "返回主页"
 }

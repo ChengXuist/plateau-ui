@@ -1,6 +1,13 @@
 {
-    "mapping": "Kartierung",
-    "mapSelection": "Karten Auswahl",
-    "newMapCreation": "Neue Karten Erstellung",
-    "continueMapping": "Kartierung Fortsetzen"
+    "mapping": "Kartenbearbeitung",
+    "mapSelection": "Kartenwahl",
+    "newMapCreation": "Neue Karten erstellen",
+    "continueMapping": "Kartenbearbeitung fortsetzen",
+    "selectMap": "Kartenwahl",
+    "mapEditor": "Karteneditor",
+    "obstacleEditor": "Hinderniseditor",
+    "pathEditor": "Pfadeditor",
+    "navigation": "Navigation",
+    "moveTo": "Bewege zu",
+    "backToHome": "Zurück zur Startseite"
 }

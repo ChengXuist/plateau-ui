@@ -20,5 +20,17 @@ npm run build
 npm run lint
 ```
 
+
+### Compile project
+```
+npm run electron:build -- --linux --armv7l --dir
+
+```
+if electron is not installed
+```
+vue add electron-builder
+```
+
+
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).

@@ -1,6 +1,13 @@
 {
     "mapping": "Mapeo",
-    "mapSelection": "Selección de Mapa",
-    "newMapCreation": "Creación de Nuevo Mapa",
-    "continueMapping": "Continuar Mapeo"
+    "mapSelection": "Selección de mapa",
+    "newMapCreation": "Creación de nuevo mapa",
+    "continueMapping": "Continuar mapeo",
+    "selectMap": "Selección de mapa",
+    "mapEditor": "Editor de mapas",
+    "obstacleEditor": "Editor de obstáculos",
+    "pathEditor": "Editor de caminos",
+    "navigation": "Navegación",
+    "moveTo": "Mover a",
+    "backToHome": "Volver a inicio"
 }
