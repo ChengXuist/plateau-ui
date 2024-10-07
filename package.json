@@ -13,6 +13,9 @@
   },
   "main": "background.js",
   "dependencies": {
+    "14": "^3.1.6",
+    "@popperjs/core": "^2.11.8",
+    "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "core-js": "^3.8.3",
     "vue": "^3.2.13",
@@ -25,11 +28,12 @@
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-eslint": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
-    "electron": "^13.0.0",
+    "electron": "^13.6.9",
     "electron-devtools-installer": "^3.1.0",
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^8.0.3",
-    "vue-cli-plugin-electron-builder": "~2.1.1"
+    "vue-cli-plugin-electron-builder": "~2.1.1",
+    "vue-drawing-canvas": "^1.0.14"
   },
   "eslintConfig": {
     "root": true,

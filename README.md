@@ -19,7 +19,11 @@ npm run build
 ```
 npm run lint
 ```
-
+vue add electron-builder
+sudo apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+npm install canvas
+npm install roslib
+npm install vue-cli-plugin-electron-builder
 
 ### Compile project
 ```
@@ -28,7 +32,6 @@ npm run electron:build -- --linux --armv7l --dir
 ```
 if electron is not installed
 ```
-vue add electron-builder
 ```
 
 
