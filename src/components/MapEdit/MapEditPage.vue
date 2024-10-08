@@ -17,13 +17,19 @@
     <div v-if="selectedMode === 'obstacle-editor'" class="mapping-options">
         <div class="drawing-tools mb-3">
             <button @click="setPanningMode(true)" class="btn btn-outline-secondary me-2">
-                <i class="fas bi-cursor"></i>
+                <i class="fas fa-hand"></i>
             </button>
             <button @click="setDrawingMode(true)" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-paint-brush"></i>
             </button>
             <button @click="setDrawingMode(false)" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-eraser"></i>
+            </button>
+            <button @click="zoomOut" class="btn btn-outline-secondary">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button @click="zoomIn" class="btn btn-outline-secondary">
+                <i class="fas fa-minus"></i>
             </button>
             <button @click="clearCanvas" class="btn btn-outline-secondary">
                 <i class="fas fa-trash-alt"></i>
@@ -32,7 +38,7 @@
                 <i class="fas fa-save"></i>
             </button>
         </div>
-        <canvas ref="editorCanvas" class="editor-canvas" width="100%" height="auto" @mousedown="onMousedown" @mousemove="onMouseMove" @mouseup="onMouseLeave" @wheel="zoomCanvas"></canvas>
+        <canvas ref="editorCanvas" class="editor-canvas" width="100%" height="auto" @mousedown="onMousedown" @mousemove="onMouseMove" @mouseup="onMouseUp" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd"></canvas>
     </div>
     <div v-else-if="selectedMode === 'path-editor'" class="photo-browser">
         <h2>{{ $t('imageEditor') }}</h2>
@@ -72,7 +78,7 @@ export default {
         },
         setDrawingMode(mode) {
             this.draw = mode;
-            this.isDrawing = mode;
+            this.isDrawing = true;
             this.isPanning = false;
         },
         getCoordinate(event) {
@@ -86,20 +92,15 @@ export default {
         },
         startPanning(event) {
             this.isPanning = true;
-            this.panStartX = event.clientX - this.panX; // Track initial mouse position
-            this.panStartY = event.clientY - this.panY;
+            this.panStartX = event.offsetX - this.panX; // Track initial mouse position
+            this.panStartY = event.offsetY - this.panY;
         },
         panMap(event) {
             if (this.isPanning) {
-                // Update the pan offsets based on mouse movement
-                this.panX = event.clientX - this.panStartX;
-                this.panY = event.clientY - this.panStartY;
-                // Redraw the canvas with the new map position
+                this.panX = event.offsetX - this.panStartX;
+                this.panY = event.offsetY - this.panStartY;
                 this.loadEditorImage();
             }
-        },
-        endPanning() {
-            this.isPanning = false;
         },
         onMousedown(event) {
             this.isMouseDown = true;
@@ -118,13 +119,38 @@ export default {
                 }
             }
         },
-        onMouseLeave(event) {
-            if (this.isDrawing) {
-                this.stopDrawing(event)
-            } else {
-                this.endPanning();
-            }
+        onMouseUp() {
             this.isMouseDown = false;
+        },
+        // New touch event handlers
+        onTouchStart(event) {
+            event.preventDefault();
+            if (event.touches.length === 1) { // Single touch for drawing or panning
+                const touch = event.touches[0];
+                const simulatedMouseEvent = this.createSimulatedMouseEvent(touch);
+                this.onMousedown(simulatedMouseEvent);
+            }
+        },
+        onTouchMove(event) {
+            event.preventDefault();
+            if (event.touches.length === 1) { // Single touch
+                const touch = event.touches[0];
+                const simulatedMouseEvent = this.createSimulatedMouseEvent(touch);
+                this.onMouseMove(simulatedMouseEvent);
+            }
+        },
+        onTouchEnd(event) {
+            event.preventDefault();
+            // When the touch ends, treat it as a mouse up or mouse leave event
+            const simulatedMouseEvent = new MouseEvent('mouseup');
+            this.onMouseUp(simulatedMouseEvent);
+        },
+        createSimulatedMouseEvent(touch) {
+            const boundingRect = this.$refs.editorCanvas.getBoundingClientRect();
+            return {
+                offsetX: touch.clientX - boundingRect.left,
+                offsetY: touch.clientY - boundingRect.top
+            };
         },
         saveCanvas() {
             const canvas = this.$refs.editorCanvas;
@@ -142,7 +168,7 @@ export default {
                 this.redrawLines();
                 const link = document.createElement('a');
                 link.href = canvas.toDataURL('image/png'); // Specify the format you want (PNG)
-                link.download = 'drawing.png'; // Default name for the downloaded file
+                link.download = 'first_map_user.png'; // Default name for the downloaded file
                 link.click();
             };
 
@@ -176,31 +202,33 @@ export default {
                 // Set canvas size based on the image size
                 canvas.width = img.width;
                 canvas.height = img.height;
-
                 ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
                 ctx.scale(this.scaleRate, this.scaleRate);
                 ctx.translate(this.panX, this.panY);
                 ctx.drawImage(img, 0, 0); // Draw the image at the center
-
                 this.redrawLines();
             };
 
             img.src = './maps/first_map.png'; // Provide the image path here
         },
-
         drawLine(x1, y1, x2, y2) {
             let ctx = this.$refs.editorCanvas.getContext('2d');
             ctx.beginPath();
-            ctx.strokeStyle = this.draw ? 'black' : 'white';
-            ctx.lineWidth = 2;
-            ctx.moveTo((x1 - this.panX) / this.scaleRate, (y1 - this.panY) / this.scaleRate);
-            ctx.lineTo((x2 - this.panX) / this.scaleRate, (y2 - this.panY) / this.scaleRate);
-            //           ctx.moveTo((x1 ) / this.scaleRate, (y1 )/ this.scaleRate);
-            // ctx.lineTo((x2  ) / this.scaleRate, (y2 )/ this.scaleRate);  
+            if (this.draw) {
+                // Drawing mode
+                ctx.globalCompositeOperation = 'source-over'; // Default drawing mode
+                ctx.strokeStyle = 'black'; // Your drawing color
+            } else {
+                // Erasing mode
+                ctx.globalCompositeOperation = 'destination-out'; // Erasing mode
+                ctx.strokeStyle = 'rgba(0,0,0,1)'; // Doesn't matter since pixels will be removed
+            }
+            ctx.lineWidth = 3;
+            ctx.moveTo(x1 / this.scaleRate - this.panX, y1 / this.scaleRate - this.panY);
+            ctx.lineTo(x2 / this.scaleRate - this.panX, y2 / this.scaleRate - this.panY);
             ctx.stroke();
             ctx.closePath();
         },
-
         redrawLines() {
             let ctx = this.$refs.editorCanvas.getContext('2d');
 
@@ -222,35 +250,21 @@ export default {
         },
         keepDrawing(e) {
             if (this.isDrawing === true) {
-                this.drawLine(this.x, this.y, e.offsetX, e.offsetY);
-                this.drawnLines.push({
-                    start: {
-                        x: (this.x - this.panX) / this.scaleRate,
-                        y: (this.y - this.panY) / this.scaleRate
-                    },
-                    end: {
-                        x: (e.offsetX - this.panX) / this.scaleRate,
-                        y: (e.offsetY - this.panY) / this.scaleRate
-                    }
-                });
-                this.x = e.offsetX;
-                this.y = e.offsetY;
-            }
-        },
-        stopDrawing(e) {
-            if (this.isDrawing === true) {
-                this.drawLine(this.x, this.y, e.offsetX, e.offsetY);
-                this.drawnLines.push({
-                    start: {
-                        x: (this.x - this.panX) / this.scaleRate,
-                        y: (this.y - this.panY) / this.scaleRate
-                    },
-                    end: {
-                        x: (e.offsetX - this.panX) / this.scaleRate,
-                        y: (e.offsetY - this.panY) / this.scaleRate
-                    }
-                });
-                this.isDrawing = false;
+                if ((this.x !== 0) && (this.y !== 0) && (e.offsetX !== 0) && (e.offsetY !== 0)) {
+                    this.drawLine(this.x, this.y, e.offsetX, e.offsetY);
+                    this.drawnLines.push({
+                        start: {
+                            x: this.x / this.scaleRate - this.panX,
+                            y: this.y / this.scaleRate - this.panY
+                        },
+                        end: {
+                            x: e.offsetX / this.scaleRate - this.panX,
+                            y: e.offsetY / this.scaleRate - this.panY
+                        }
+                    });
+                    this.x = e.offsetX;
+                    this.y = e.offsetY;
+                }
             }
         },
         zoomCanvas(event) {
@@ -263,6 +277,17 @@ export default {
                 this.scaleRate = Math.min(3, this.scaleRate + zoomFactor);
             }
 
+            this.loadEditorImage();
+        },
+        zoomIn() {
+            const zoomFactor = 0.1;
+            this.scaleRate = Math.max(0.5, this.scaleRate - zoomFactor);
+
+            this.loadEditorImage();
+        },
+        zoomOut() {
+            const zoomFactor = 0.1;
+            this.scaleRate = Math.min(3, this.scaleRate + zoomFactor);
             this.loadEditorImage();
         },
     },
