@@ -16,10 +16,10 @@
     <!-- Obstacle Editor -->
     <div v-if="selectedMode === 'obstacle-editor'" class="mapping-options">
         <div class="drawing-tools mb-3">
-            <button @click="setDrawingMode('draw')" class="btn btn-outline-secondary me-2">
+            <button @click="setDrawingMode(true)" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-paint-brush"></i>
             </button>
-            <button @click="setDrawingMode('erase')" class="btn btn-outline-secondary me-2">
+            <button @click="setDrawingMode(false)" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-eraser"></i>
             </button>
             <button @click="clearCanvas" class="btn btn-outline-secondary">
@@ -30,7 +30,10 @@
             </button>
         </div>
 
-        <canvas ref="canvas" class="drawing-canvas" @mousedown="startDrawing" @mouseup="stopDrawing" @mousemove="draw"></canvas>
+        <canvas ref="editorCanvas" class="editor-canvas" width="100%" height="auto" @mousedown="beginDrawing" @mousemove="keepDrawing" @mouseup="stopDrawing" @wheel="zoomCanvas"></canvas>
+        <!-- <vue-drawing-canvas ref="VueCanvasDrawing" v-model:image="image" :canvasId="myCanvas" :width="canvasWidth" :height="400" :stroke-type="strokeType" :line-cap="lineCap" :line-join="lineJoin" :fill-shape="fillShape" :eraser="eraser" :lineWidth="line" :color="color" :background-color="backgroundColor" :background-image="backgroundImage" :watermark="watermark" :initial-image="initialImage" saveAs="png" :styles="{
+            border: 'solid 1px #000',
+          }" :lock="disabled" @mousemove="getCoordinate($event)" @wheel="handleScroll" :additional-images="additionalImages" /> -->
     </div>
     <!-- Path Editor -->
     <div v-else-if="selectedMode === 'path-editor'" class="photo-browser">
@@ -43,52 +46,104 @@
 </template>
 
 <script>
+// import VueDrawingCanvas from "vue-drawing-canvas";
 // import config from "@/assets/configuration/map-configuration.json"; // Import configuration
 export default {
+    // components: {
+    //     VueDrawingCanvas,
+    // },
     data() {
         return {
             selectedMode: 'obstacle-editor', // Default mode
             isDrawing: false,
-            drawingMode: 'draw', // or 'erase'
+            canvasWidth: 400,
+            backgroundImage: './maps/first_map.png',
+            scaleRate: 1.0,
+
         };
     },
     methods: {
         setDrawingMode(mode) {
-            this.drawingMode = mode;
+            this.isDrawing = mode;
         },
-        startDrawing(event) {
-            this.isDrawing = true;
-            this.draw(event); // Call draw once to start drawing immediately
-        },
-        stopDrawing() {
-            this.isDrawing = false;
-            const ctx = this.$refs.canvas.getContext('2d');
-            ctx.beginPath(); // Reset the current drawing path
-        },
-        draw(event) {
-            if (!this.isDrawing) return;
+        // startDrawing(event) {
+        //     this.isDrawing = true;
+        //     // this.draw(event); // Call draw once to start drawing immediately
+        //     this.isDrawing = true; // Start drawing
+        //     this.lastX = event.offsetX; // Get the mouse position
+        //     this.lastY = event.offsetY;
+        // },
+        // stopDrawing() {
+        //     this.isDrawing = false;
+        //     const ctx = this.$refs.editorCanvas.getContext('2d');
+        //     ctx.beginPath(); // Reset the current drawing path
+        // },
+        // handleScroll(event) {
+        //     const delta = event.deltaY; // Positive or negative value
+        //     if (delta > 0) {
+        //         // Scrolling down, decrease canvas width
+        //         if (this.canvasWidth > 100) {
+        //             this.canvasWidth -= 10; // Decrease width by 10px
+        //         }
+        //     } else {
+        //         // Scrolling up, increase canvas width
+        //         this.canvasWidth += 10; // Increase width by 10px
+        //     }
+        //     this.$refs.VueCanvasDrawing.redraw();
+        // },
+        // draw(event) {
+        //     event;
+        //     if (!this.isDrawing) return;
 
-            const canvas = this.$refs.canvas;
-            const ctx = canvas.getContext('2d');
-            const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
+        //     const canvas = this.$refs.editorCanvas;
+        //     const ctx = canvas.getContext('2d');
+        //     const rect = canvas.getBoundingClientRect();
+        //     const x = event.clientX - rect.left;
+        //     const y = event.clientY - rect.top;
 
-            ctx.fillStyle = this.drawingMode === 'draw' ? 'black' : 'white'; // Adjust colors as needed
-            ctx.strokeStyle = this.drawingMode === 'draw' ? 'black' : 'white';
-            ctx.lineWidth = 5; // Adjust line width as needed
+        //     console.log("event.clientX: ", event.clientX);
+        //     console.log("event.clientY: ", event.clientY);
 
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
+        //     ctx.fillStyle = this.drawingMode === 'draw' ? 'black' : 'white'; // Adjust colors as needed
+        //     ctx.strokeStyle = this.drawingMode === 'draw' ? 'black' : 'white';
+        //     ctx.lineWidth = 1; // Adjust line width as needed
+
+        //     ctx.lineTo(x, y);
+        //     ctx.stroke();
+        //     ctx.beginPath();
+        //     ctx.moveTo(x, y);
+
+        //     //         const canvasZoom = canvas.getZoom();
+        //     //         if (!this.isDrawing) return; // If not drawing, do nothing
+
+        //     //  // Get the canvas element using the ref we added earlier
+
+        //     //         console.log("event.clientX: ", (event.clientX - rectLeft)* canvasZoom);
+        //     //         // console.log("rect.offsetLeft: ", rectLeft);
+        //     //         console.log("event.clientY: ", event.clientY - rect.top);
+        //     //         // console.log("rect.top: ", rect.top);
+        //     // // Start drawing a line
+        //     // ctx.beginPath();
+        //     // ctx.moveTo(50, 50);  // Starting point (x, y)
+        //     // ctx.lineTo(100, 100); // Ending point (x, y)
+        //     // ctx.strokeStyle = 'blue'; // Set line color
+        //     // ctx.lineWidth = 2; // Set line width
+        //     // ctx.stroke(); // Draw the line
+        // },
+
+        getCoordinate(event) {
+            let coordinates = this.$refs.VueCanvasDrawing.getCoordinates(event);
+            this.x = coordinates.x;
+            this.y = coordinates.y;
         },
+
         clearCanvas() {
-            const ctx = this.$refs.canvas.getContext('2d');
-            ctx.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height);
+            const ctx = this.$refs.editorCanvas.getContext('2d');
+            ctx.clearRect(0, 0, this.$refs.editorCanvas.width, this.$refs.editorCanvas.height);
         },
         saveCanvas() {
-            const canvas = this.$refs.canvas;
+
+            const canvas = this.$refs.editorCanvas;
             const link = document.createElement('a');
             link.href = canvas.toDataURL('image/png'); // Specify the format you want (PNG)
             link.download = 'drawing.png'; // Default name for the downloaded file
@@ -115,7 +170,75 @@ export default {
                 reader.readAsDataURL(file);
             }
         },
+        loadEditorImage() {
+            const canvas = this.$refs.editorCanvas;
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+
+            img.onload = () => {
+                // Set canvas size based on the image size
+                canvas.width = img.width;
+                canvas.height = img.height;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+                ctx.scale(this.scaleRate, this.scaleRate);
+                ctx.drawImage(img, 0, 0); // Draw the image at the center
+            };
+
+            img.src = './maps/first_map.png'; // Provide the image path here
+        },
+
+        drawLine(x1, y1, x2, y2) {
+            let ctx = this.$refs.editorCanvas.getContext('2d');
+            ctx.beginPath();
+            ctx.strokeStyle = this.isDrawing ? 'white' : 'black';
+            ctx.lineWidth = 2;
+            ctx.moveTo(x1/this.scaleRate, y1/this.scaleRate);
+            ctx.lineTo(x2/this.scaleRate, y2/this.scaleRate);
+            ctx.stroke();
+            ctx.closePath();
+        },
+        beginDrawing(e) {
+            this.x = e.offsetX;
+            this.y = e.offsetY;
+            this.isDrawing = true;
+        },
+        keepDrawing(e) {
+            if (this.isDrawing === true) {
+                this.drawLine(this.x, this.y, e.offsetX, e.offsetY);
+                this.x = e.offsetX;
+                this.y = e.offsetY;
+            }
+        },
+        stopDrawing(e) {
+            if (this.isDrawing === true) {
+                this.drawLine(this.x, this.y, e.offsetX, e.offsetY);
+                this.x = 0;
+                this.y = 0;
+                this.isDrawing = false;
+            }
+        },
+        zoomCanvas(event) {
+            event.preventDefault();
+
+            // Adjust the scale (zoom level) based on scroll direction
+            const zoomFactor = 0.1;
+            if (event.deltaY > 0.5) {
+                // Zoom out
+                this.scaleRate = Math.max(0.5, this.scaleRate - zoomFactor);
+            } else {
+                // Zoom in
+                this.scaleRate = Math.min(3, this.scaleRate + zoomFactor);
+            }
+
+            this.loadEditorImage();
+        },
+
     },
+    mounted() {
+        this.loadEditorImage();
+
+    }
 };
 </script>
 
@@ -173,16 +296,17 @@ export default {
     margin-right: 10px;
 }
 
-.drawing-canvas {
+.editor-canvas {
     border: 1px solid #ccc;
-    width: 100%;
-    height: 400px;
+
 }
 
 .image-canvas {
     border: 1px solid #ccc;
     width: 100%;
     height: auto;
+    width: 600px;
+    height: 400px;
     /* Allow it to adjust based on image dimensions */
 }
 </style>

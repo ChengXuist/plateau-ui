@@ -18,6 +18,7 @@
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "core-js": "^3.8.3",
+    "fabric": "^6.4.3",
     "vue": "^3.2.13",
     "vue-i18n": "^9.14.1",
     "vue-router": "^4.0.13"
@@ -33,7 +34,7 @@
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^8.0.3",
     "vue-cli-plugin-electron-builder": "~2.1.1",
-    "vue-drawing-canvas": "^1.0.14"
+    "vue-drawing-canvas": "^1.0.3"
   },
   "eslintConfig": {
     "root": true,
