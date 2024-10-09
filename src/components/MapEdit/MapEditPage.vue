@@ -14,7 +14,7 @@
     </div>
 
     <!-- Obstacle Editor -->
-    <div v-if="selectedMode === 'obstacle-editor'" class="mapping-options">
+    <div v-if="selectedMode === 'obstacle-editor'" ref="mappingOptions" class="mapping-options">
         <div class="drawing-tools mb-3">
             <button @click="setPanningMode(true)" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-hand"></i>
@@ -31,6 +31,9 @@
             <button @click="zoomIn" class="btn btn-outline-secondary">
                 <i class="fas fa-minus"></i>
             </button>
+            <button @mousedown="startLongPress" @touchstart="startLongPress" @touchend="cancelLongPress" @click="undo" class="btn btn-outline-secondary">
+                <i class="fas fa-rotate-left"></i>
+            </button>
             <button @click="clearCanvas" class="btn btn-outline-secondary">
                 <i class="fas fa-trash-alt"></i>
             </button>
@@ -38,7 +41,7 @@
                 <i class="fas fa-save"></i>
             </button>
         </div>
-        <canvas ref="editorCanvas" class="editor-canvas" width="100%" height="auto" @mousedown="onMousedown" @mousemove="onMouseMove" @mouseup="onMouseUp" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd"></canvas>
+            <canvas ref="editorCanvas" class="editor-canvas" width="100%" height="100%" @mousedown="onMousedown" @mousemove="onMouseMove" @mouseup="onMouseUp" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd"></canvas>
     </div>
     <div v-else-if="selectedMode === 'path-editor'" class="photo-browser">
         <h2>{{ $t('imageEditor') }}</h2>
@@ -67,8 +70,10 @@ export default {
 
             isMouseDown: false,
             drawnLines: [],
+            drawnLine: [],
             x: null,
             y: null,
+            lineWidth: 3,
         };
     },
     methods: {
@@ -87,8 +92,9 @@ export default {
             this.y = coordinates.y;
         },
         clearCanvas() {
-            const ctx = this.$refs.editorCanvas.getContext('2d');
-            ctx.clearRect(0, 0, this.$refs.editorCanvas.width, this.$refs.editorCanvas.height);
+            this.drawnLines = [];
+            this.drawnLine = [];
+            this.loadEditorImage();
         },
         startPanning(event) {
             this.isPanning = true;
@@ -120,6 +126,9 @@ export default {
             }
         },
         onMouseUp() {
+            if (!this.isPanning) {
+                this.endDrawing();
+            }
             this.isMouseDown = false;
         },
         // New touch event handlers
@@ -141,9 +150,7 @@ export default {
         },
         onTouchEnd(event) {
             event.preventDefault();
-            // When the touch ends, treat it as a mouse up or mouse leave event
-            const simulatedMouseEvent = new MouseEvent('mouseup');
-            this.onMouseUp(simulatedMouseEvent);
+            this.onMouseUp();
         },
         createSimulatedMouseEvent(touch) {
             const boundingRect = this.$refs.editorCanvas.getBoundingClientRect();
@@ -197,15 +204,17 @@ export default {
             const canvas = this.$refs.editorCanvas;
             const ctx = canvas.getContext("2d");
             const img = new Image();
+            const mappingOptionsW = this.$refs.mappingOptions.getBoundingClientRect().width;
 
             img.onload = () => {
                 // Set canvas size based on the image size
-                canvas.width = img.width;
+                canvas.width = mappingOptionsW;
                 canvas.height = img.height;
+
                 ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
                 ctx.scale(this.scaleRate, this.scaleRate);
                 ctx.translate(this.panX, this.panY);
-                ctx.drawImage(img, 0, 0); // Draw the image at the center
+                ctx.drawImage(img, (canvas.width - img.width)/2, 0); // Draw the image at the center
                 this.redrawLines();
             };
 
@@ -213,34 +222,27 @@ export default {
         },
         drawLine(x1, y1, x2, y2) {
             let ctx = this.$refs.editorCanvas.getContext('2d');
+            ctx.save();
             ctx.beginPath();
-            if (this.draw) {
-                // Drawing mode
-                ctx.globalCompositeOperation = 'source-over'; // Default drawing mode
-                ctx.strokeStyle = 'black'; // Your drawing color
-            } else {
-                // Erasing mode
-                ctx.globalCompositeOperation = 'destination-out'; // Erasing mode
-                ctx.strokeStyle = 'rgba(0,0,0,1)'; // Doesn't matter since pixels will be removed
-            }
-            ctx.lineWidth = 3;
+            ctx.strokeStyle = this.draw ? 'black' : 'white';
+            ctx.lineWidth = this.lineWidth;
             ctx.moveTo(x1 / this.scaleRate - this.panX, y1 / this.scaleRate - this.panY);
             ctx.lineTo(x2 / this.scaleRate - this.panX, y2 / this.scaleRate - this.panY);
             ctx.stroke();
-            ctx.closePath();
         },
         redrawLines() {
             let ctx = this.$refs.editorCanvas.getContext('2d');
 
             // Draw all stored lines
-            this.drawnLines.forEach(line => {
-                ctx.beginPath();
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 2;
-                ctx.moveTo(line.start.x, line.start.y);
-                ctx.lineTo(line.end.x, line.end.y);
-                ctx.stroke();
-                ctx.closePath();
+            this.drawnLines.forEach(strokes => {
+                strokes.forEach(line => {
+                    ctx.beginPath();
+                    ctx.strokeStyle = line.color;
+                    ctx.lineWidth = this.lineWidth;
+                    ctx.moveTo(line.start.x, line.start.y);
+                    ctx.lineTo(line.end.x, line.end.y);
+                    ctx.stroke();
+                })
             });
         },
         beginDrawing(e) {
@@ -252,7 +254,8 @@ export default {
             if (this.isDrawing === true) {
                 if ((this.x !== 0) && (this.y !== 0) && (e.offsetX !== 0) && (e.offsetY !== 0)) {
                     this.drawLine(this.x, this.y, e.offsetX, e.offsetY);
-                    this.drawnLines.push({
+                    this.drawnLine.push({
+                        color: this.draw ? 'black' : 'white',
                         start: {
                             x: this.x / this.scaleRate - this.panX,
                             y: this.y / this.scaleRate - this.panY
@@ -266,6 +269,10 @@ export default {
                     this.y = e.offsetY;
                 }
             }
+        },
+        endDrawing() {
+            this.drawnLines.push(this.drawnLine)
+            this.drawnLine = [];
         },
         zoomCanvas(event) {
             event.preventDefault();
@@ -290,10 +297,17 @@ export default {
             this.scaleRate = Math.min(3, this.scaleRate + zoomFactor);
             this.loadEditorImage();
         },
+
+        undo() {
+            if (this.drawnLines.length > 0) {
+                this.drawnLines.pop(); // Remove the latest state
+                this.redrawLines();
+                this.loadEditorImage();
+            }
+        },
     },
     mounted() {
         this.loadEditorImage();
-
     }
 };
 </script>
@@ -306,8 +320,8 @@ export default {
     justify-content: flex-start;
     align-items: flex-start;
     height: 100vh;
+    width: 100vw;
     background-color: white;
-    /* Set background to white */
     padding: 20px;
 }
 
@@ -354,7 +368,8 @@ export default {
 
 .editor-canvas {
     border: 1px solid #ccc;
-
+    max-width: 100%; /* Prevent overflow */
+    max-height: 100%; /* Prevent overflow */
 }
 
 .image-canvas {
@@ -364,5 +379,13 @@ export default {
     width: 600px;
     height: 400px;
     /* Allow it to adjust based on image dimensions */
+}
+
+.mapping-options {
+    display: flex;
+    flex-direction: column; /* Stack tools and canvas vertically */
+    align-items: center; /* Center the canvas horizontally */
+    width: 100%;
+    height: 100%;
 }
 </style>

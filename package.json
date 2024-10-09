@@ -9,7 +9,8 @@
     "electron:build": "vue-cli-service electron:build",
     "electron:serve": "vue-cli-service electron:serve",
     "postinstall": "electron-builder install-app-deps",
-    "postuninstall": "electron-builder install-app-deps"
+    "postuninstall": "electron-builder install-app-deps",
+    "webpack-defaults": "webpack-defaults"
   },
   "main": "background.js",
   "dependencies": {
@@ -17,15 +18,19 @@
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
+    "canvas": "^2.11.2",
+    "cli-service": "0.0.2",
     "core-js": "^3.8.3",
     "fabric": "^6.4.3",
     "vue": "^3.2.13",
+    "vue-cli-service": "^5.0.10",
     "vue-i18n": "^9.14.1",
     "vue-router": "^4.0.13"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.16",
+    "@babel/core": "^7.25.7",
     "@babel/eslint-parser": "^7.12.16",
+    "@babel/preset-env": "^7.25.7",
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-eslint": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
@@ -33,7 +38,6 @@
     "electron-devtools-installer": "^3.1.0",
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^8.0.3",
-    "vue-cli-plugin-electron-builder": "~2.1.1",
     "vue-drawing-canvas": "^1.0.3"
   },
   "eslintConfig": {
