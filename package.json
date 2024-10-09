@@ -12,7 +12,7 @@
     "postuninstall": "electron-builder install-app-deps",
     "webpack-defaults": "webpack-defaults"
   },
-  "main": "background.js",
+  "main": "main.js",
   "dependencies": {
     "14": "^3.1.6",
     "@popperjs/core": "^2.11.8",

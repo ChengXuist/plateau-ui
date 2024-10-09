@@ -9,5 +9,6 @@
     "pathEditor": "Path Editor",
     "navigation": "Navigation",
     "moveTo": "Move To",
-    "backToHome": "Back to Home"
+    "backToHome": "Back to Home",
+    "stationEditor": "Station Editor"
 }
