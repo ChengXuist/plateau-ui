@@ -51,11 +51,11 @@ export default {
             const canvas = this.$refs.editorCanvas;
             const ctx = canvas.getContext('2d');
             const img = new Image();
-            const mappingOptionsW = this.$refs.mappingOptions.getBoundingClientRect().width;
+            const obstacleEditorOptionsW = this.$refs.obstacleEditorOptions.getBoundingClientRect().width;
 
             img.onload = () => {
                 // Set canvas size based on the image size
-                canvas.width = mappingOptionsW;
+                canvas.width = obstacleEditorOptionsW;
                 canvas.height = img.height;
                 ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
                 ctx.drawImage(img, this.canversOffSet, 0); // Draw the image at the center
@@ -150,7 +150,7 @@ export default {
             const img = new Image();
             img.onload = () => {
                 // Set canvas size based on the image size
-                canvas.width = this.$refs.mappingOptions.getBoundingClientRect().width;
+                canvas.width = this.$refs.obstacleEditorOptions.getBoundingClientRect().width;
                 canvas.height = img.height;
                 this.canversOffSet = (canvas.width - img.width) / 2
 

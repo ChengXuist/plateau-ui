@@ -8,13 +8,13 @@
         <button class="toggle-button" :class="['toggle-button', { active: activeTab === 'obstacle-editor' }]" @click="activeTab = 'obstacle-editor'">
             {{ $t('obstacleEditor') }}
         </button>
-        <button class="toggle-button" :class="['toggle-button', { active: activeTab === 'station-editor' }]" @click="activeTab = 'station-editor'">
+        <button class="toggle-button" :class="['toggle-button', { active: activeTab === 'station-editor' }]" @click="activateStationEditor">
             {{ $t('stationEditor') }}
         </button>
     </div>
 
     <!-- Obstacle Editor -->
-    <div v-show="activeTab === 'obstacle-editor'" ref="mappingOptions" class="mapping-options">
+    <div v-show="activeTab === 'obstacle-editor'" ref="obstacleEditorOptions" class="mapping-options">
         <div class="drawing-tools mb-3">
             <button @click="setPanningMode(true)" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-hand"></i>
@@ -31,7 +31,7 @@
             <button @click="zoom(true)" class="btn btn-outline-secondary">
                 <i class="fas fa-minus"></i>
             </button>
-            <button @mousedown="startLongPress" @touchstart="startLongPress" @touchend="cancelLongPress" @click="undo" class="btn btn-outline-secondary">
+            <button @click="undo" class="btn btn-outline-secondary">
                 <i class="fas fa-rotate-left"></i>
             </button>
             <button @click="clearCanvas" class="btn btn-outline-secondary">
@@ -41,20 +41,43 @@
                 <i class="fas fa-save"></i>
             </button>
         </div>
-        <canvas ref="editorCanvas" class="editor-canvas" width="100%" height="100%" @mousedown="onMousedown" @mousemove="onMouseMove" @mouseup="onMouseUp" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd"></canvas>
+        <canvas ref="editorCanvas" class="obstacle-editor-canvas" width="100%" height="100%" @mousedown="onMousedown" @mousemove="onMouseMove" @mouseup="onMouseUp" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd"></canvas>
     </div>
-    <div v-show="activeTab === 'station-editor'" class="photo-browser">
-        <h2>{{ $t('stationEditor') }}</h2>
-        <canvas ref="stationEditorCanvas" class="station-editro-canvas"></canvas>
+    <div v-show="activeTab === 'station-editor'" class="mapping-options" ref="stationEditorOption">
+        <div class="drawing-tools mb-3">
+            <button @click="setPanningMode(true)" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-hand"></i>
+            </button>
+            <button @click="setRobot()" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-circle-chevron-up"></i>
+            </button>
+            <button @click="zoomStationCanvas(false)" class="btn btn-outline-secondary">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button @click="zoomStationCanvas(true)" class="btn btn-outline-secondary">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button @click="undo" class="btn btn-outline-secondary">
+                <i class="fas fa-rotate-left"></i>
+            </button>
+            <button @click="clearCanvas" class="btn btn-outline-secondary">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+            <button @click="saveCanvas" class="btn btn-outline-secondary">
+                <i class="fas fa-save"></i>
+            </button>
+        </div>
+        <canvas id="station-editor-canvas" ref="stationEditorCanvas" class="station-editor-canvas" width="100%" height="100%" @mousedown="onStationMousedown"></canvas>
     </div>
 </div>
 </template>
 
 <script>
 import obstacleEditor from '@/script/MapEdit/obstacleEditor.js';
+import stationEditor from '@/script/MapEdit/stationEditor.js';
 export default {
     name: 'MapEdit',
-    mixins: [obstacleEditor], // Use mixins to integrate the logic
+    mixins: [obstacleEditor, stationEditor], // Use mixins to integrate the logic
 };
 </script>
 
@@ -113,21 +136,10 @@ export default {
     margin-right: 10px;
 }
 
-.editor-canvas {
+.obstacle-editor-canvas {
     border: 1px solid #ccc;
     max-width: 100%;
-    /* Prevent overflow */
     max-height: 100%;
-    /* Prevent overflow */
-}
-
-.image-canvas {
-    border: 1px solid #ccc;
-    width: 100%;
-    height: auto;
-    width: 600px;
-    height: 400px;
-    /* Allow it to adjust based on image dimensions */
 }
 
 .mapping-options {
@@ -138,5 +150,11 @@ export default {
     /* Center the canvas horizontally */
     width: 100%;
     height: 100%;
+}
+
+.station-editor-canvas {
+    border: 1px solid #ccc;
+    max-width: 100%;
+    max-height: 100%;
 }
 </style>
