@@ -10,5 +10,9 @@
     "navigation": "Navigation",
     "moveTo": "Move To",
     "backToHome": "Back to Home",
-    "stationEditor": "Station Editor"
+    "stationEditor": "Station Editor",
+    "editRobotProperty": "Edit Robot Property",
+    "angle": "Angle",
+    "left": "Left",
+    "top": "Top"
 }

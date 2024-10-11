@@ -85,6 +85,7 @@ export default {
         // Call the loadImage method with the desired image path when the component is mounted
         const imagePath = './maps/first_map.png'; // Replace with your image path
         this.loadImage(imagePath);
+        
     },
 
 };

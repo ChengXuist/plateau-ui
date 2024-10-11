@@ -43,13 +43,17 @@
         </div>
         <canvas ref="editorCanvas" class="obstacle-editor-canvas" width="100%" height="100%" @mousedown="onMousedown" @mousemove="onMouseMove" @mouseup="onMouseUp" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd"></canvas>
     </div>
+
     <div v-show="activeTab === 'station-editor'" class="mapping-options" ref="stationEditorOption">
         <div class="drawing-tools mb-3">
             <button @click="setPanningMode(true)" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-hand"></i>
             </button>
-            <button @click="setRobot()" class="btn btn-outline-secondary me-2">
+            <button @click="setStation()" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-circle-chevron-up"></i>
+            </button>
+            <button @click="removeSelectedObject" class="btn btn-outline-secondary me-2" style="background-color:red;">
+                <i class="fas fa-circle-xmark"></i>
             </button>
             <button @click="zoomStationCanvas(false)" class="btn btn-outline-secondary">
                 <i class="fas fa-plus"></i>
@@ -68,6 +72,24 @@
             </button>
         </div>
         <canvas id="station-editor-canvas" ref="stationEditorCanvas" class="station-editor-canvas" width="100%" height="100%" @mousedown="onStationMousedown"></canvas>
+    </div>
+    <div v-if="showPopup" class="setStationPopup" :style="{ top: stationSettingPopupY + 'px', left: stationSettingPopupX + 'px' }">
+        {{ $t('editRobotProperty') }}
+        <button @click="closePopup" class="close-button">&times;</button>
+        <label for="angle">{{ $t('angle') }}:&nbsp;{{ stationProperties.angle }}&nbsp;&nbsp;</label>
+        <label for="left">{{ $t('left') }} (X):&nbsp;{{ stationProperties.left }}&nbsp;&nbsp;</label>
+        <label for="top">{{ $t('top') }} (Y):&nbsp;{{ stationProperties.left }}&nbsp;&nbsp;</label>
+        <div class="controls">
+            <button @click="rotateStation('left')" class="btn btn-outline-secondary">
+                <i class="fas fa-rotate-left"></i>
+            </button>
+            <button @click="rotateStation('right')" class="btn btn-outline-secondary">
+                <i class="fas fa-rotate-right"></i>
+            </button>
+            <button @click="confirmEdit" class="btn btn-outline-secondary">Confirm</button>
+        </div>
+        <div class="action-buttons">
+        </div>
     </div>
 </div>
 </template>
@@ -156,5 +178,44 @@ export default {
     border: 1px solid #ccc;
     max-width: 100%;
     max-height: 100%;
+}
+
+.setStationPopup {
+    background-color: lightgray;
+    padding: 20px;
+    border-radius: 5px;
+    width: 300px;
+    position: absolute;
+    z-index: 100;
+}
+
+.controls {
+    margin: 10px 0;
+}
+
+.controls button {
+    margin-right: 10px;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.close-button {
+    position: absolute;
+  top: 10px;    /* Adjust for vertical positioning */
+  right: 10px;  /* Adjust for horizontal positioning */
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: red;
+  font-weight: bold;
+}
+
+.close-button:hover {
+    color: darkred;
 }
 </style>
