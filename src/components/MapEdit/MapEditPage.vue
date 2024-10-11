@@ -46,28 +46,19 @@
 
     <div v-show="activeTab === 'station-editor'" class="mapping-options" ref="stationEditorOption">
         <div class="drawing-tools mb-3">
-            <button @click="setPanningMode(true)" class="btn btn-outline-secondary me-2">
+            <button @click="setStationPanningMode(true)" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-hand"></i>
             </button>
-            <button @click="setStation()" class="btn btn-outline-secondary me-2">
+            <button @click="addStation()" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-circle-chevron-up"></i>
             </button>
-            <button @click="removeSelectedObject" class="btn btn-outline-secondary me-2" style="background-color:red;">
-                <i class="fas fa-circle-xmark"></i>
-            </button>
-            <button @click="zoomStationCanvas(false)" class="btn btn-outline-secondary">
+            <button @click="zoomStationCanvas(true)" class="btn btn-outline-secondary">
                 <i class="fas fa-plus"></i>
             </button>
-            <button @click="zoomStationCanvas(true)" class="btn btn-outline-secondary">
+            <button @click="zoomStationCanvas(false)" class="btn btn-outline-secondary">
                 <i class="fas fa-minus"></i>
             </button>
-            <button @click="undo" class="btn btn-outline-secondary">
-                <i class="fas fa-rotate-left"></i>
-            </button>
-            <button @click="clearCanvas" class="btn btn-outline-secondary">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-            <button @click="saveCanvas" class="btn btn-outline-secondary">
+            <button @click="saveStations" class="btn btn-outline-secondary">
                 <i class="fas fa-save"></i>
             </button>
         </div>
@@ -76,9 +67,9 @@
     <div v-if="showPopup" class="setStationPopup" :style="{ top: stationSettingPopupY + 'px', left: stationSettingPopupX + 'px' }">
         {{ $t('editRobotProperty') }}
         <button @click="closePopup" class="close-button">&times;</button>
-        <label for="angle">{{ $t('angle') }}:&nbsp;{{ stationProperties.angle }}&nbsp;&nbsp;</label>
-        <label for="left">{{ $t('left') }} (X):&nbsp;{{ stationProperties.left }}&nbsp;&nbsp;</label>
-        <label for="top">{{ $t('top') }} (Y):&nbsp;{{ stationProperties.left }}&nbsp;&nbsp;</label>
+        <label for="angle">{{ $t('angle') }}:&nbsp;{{ selectedStation.angle }}&nbsp;&nbsp;</label>
+        <label for="left">{{ $t('left') }} (X):&nbsp;{{ selectedStation.left }}&nbsp;&nbsp;</label>
+        <label for="top">{{ $t('top') }} (Y):&nbsp;{{ selectedStation.left }}&nbsp;&nbsp;</label>
         <div class="controls">
             <button @click="rotateStation('left')" class="btn btn-outline-secondary">
                 <i class="fas fa-rotate-left"></i>
@@ -86,7 +77,10 @@
             <button @click="rotateStation('right')" class="btn btn-outline-secondary">
                 <i class="fas fa-rotate-right"></i>
             </button>
-            <button @click="confirmEdit" class="btn btn-outline-secondary">Confirm</button>
+            <button @click="confirmStation" class="btn btn-outline-secondary">Confirm</button>
+            <button @click="removeStation" class="btn btn-outline-secondary">
+                <i class="fas fa-trash-alt"></i>
+            </button>
         </div>
         <div class="action-buttons">
         </div>
