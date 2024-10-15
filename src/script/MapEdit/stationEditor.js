@@ -1,11 +1,10 @@
 import * as fabric from 'fabric';
-import stationData from '@/settings/stations.json'
+const { ipcRenderer } = window.require('electron');
 
 export default {
-
     data() {
         return {
-            tosetStation: false,
+            toSetStation: false,
             stationCanvasX: 0,
             stationCanvasY: 0,
 
@@ -20,10 +19,10 @@ export default {
             },
             stationCounter: 0,
 
-            stationSettingPopupY: null,
             stationSettingPopupX: null,
+            stationSettingPopupY: null,
 
-            popupOffSet: 50,
+            popupOffSet: 5,
             stations: {},
 
             selectedStation: null,
@@ -40,61 +39,47 @@ export default {
 
             isMouse: false,
             imageOffset: 0,
+            mapFile: 'first_map.png', // This can be dynamic
 
+            canvasWidth: 0,
+            canvasHeight: 0,
+            newStationYoffset: 15,
         };
     },
+    mounted() {
+        this.canvasWidth = this.$refs.obstacleEditorOptions.getBoundingClientRect().width;
+        this.canvasHeight = this.$refs.obstacleEditorOptions.getBoundingClientRect().height;
+        this.initCanvas();
+    },
+
     methods: {
-        activateStationEditor() {
-            this.activeTab = 'station-editor'; // Set active tab
-            this.loadEditor(); // Replace with your actual function name
-        },
-        // Example additional function
-        loadEditor() {
-            // Add your custom logic here
-            if (!this.fabricCanvasInstance) {
-                this.$nextTick(() => {
-                    this.initCanvas();
-                });
-            }
-        },
-
         initCanvas() {
-            const imageUrl = './maps/first_map.png'
-            const image = new Image()
-            image.src = imageUrl
-
-            image.onload = () => {
-                this.imageOffset = (this.$refs.stationEditorOption.getBoundingClientRect().width - image.width) / 2;
-                this.fabricImage = new fabric.FabricImage(image, {
-                    left: this.imageOffset, // Horizontal offset
-                })
-                this.fabricCanvasInstance = new fabric.Canvas(this.$refs.stationEditorCanvas, {
-                    width: this.$refs.stationEditorOption.getBoundingClientRect().width,
-                    height: this.$refs.stationEditorOption.getBoundingClientRect().height,
-                    backgroundImage: this.fabricImage,
-                })
-                this.fabricCanvasInstance.renderAll()
-
-                this.loadStations();
-                this.setupCanvasPanning();
-            }
-        },
-        loadStationMap() {
-            const imageUrl = './maps/first_map.png'
-            const image = new Image()
-            image.src = imageUrl
-            image.onload = () => {
-                this.fabricImage = new fabric.FabricImage(image, {
-                    left: this.imageOffset, // Horizontal offset
-                })
-                this.fabricCanvasInstance = new fabric.Canvas(this.$refs.stationEditorCanvas, {
-                    width: this.$refs.stationEditorOption.getBoundingClientRect().width,
-                    height: this.$refs.stationEditorOption.getBoundingClientRect().height,
-                    backgroundImage: this.fabricImage,
-                })
-                this.loadStations();
-                this.fabricCanvasInstance.renderAll()
-            }
+            ipcRenderer.send('load-image-file', this.mapFile);
+            ipcRenderer.on('image-file-data', (event, response) => {
+                if (response.success) {
+                    const base64Image = response.data;
+                    const image = new Image();
+                    image.src = `data:image/png;base64,${base64Image}`;
+                    image.onload = () => {
+                        this.imageOffset = (this.canvasWidth - image.width) / 2;
+                        this.fabricImage = new fabric.FabricImage(image, {
+                            left: this.imageOffset, // Horizontal offset
+                        })
+                        if (this.fabricCanvasInstance === null) {
+                            this.fabricCanvasInstance = new fabric.Canvas(this.$refs.stationEditorCanvas, {
+                                width: this.canvasWidth,
+                                height: this.canvasHeight,
+                                backgroundImage: this.fabricImage,
+                            })
+                        }
+                        this.loadStations();
+                        this.setupCanvasPanning();
+                        this.fabricCanvasInstance.requestRenderAll();
+                    };
+                } else {
+                    console.error('Failed to load image:', response.error);
+                }
+            });
         },
         setStationPanningMode() {
             this.isPanning = true;
@@ -102,9 +87,9 @@ export default {
         setupCanvasPanning() {
             // Handle mouse down event (start panning)
             this.fabricCanvasInstance.on('mouse:down', (opt) => {
+                this.showPopup = false;
                 if (this.isPanning) {
                     this.isPanningMouseDown = true;
-
                     const evt = opt.e;
                     this.isMouse = (opt.e.type === "mousedown");
                     if (this.isMouse) {
@@ -184,10 +169,10 @@ export default {
         },
         addStation() {
             this.isPanning = false;
-            this.tosetStation = true;
+            this.toSetStation = true;
             this.stationCounter += 1;
             let id = "station_" + this.stationCounter
-            this.setStation(id, 30, 30, 0, 'black');
+            this.setStation(id, this.canvasWidth / 2, -1 * this.fabricCanvasInstance.viewportTransform[5] + this.newStationYoffset, 0, 'black');
         },
         setStation(id, left, top, angle, color) {
             this.fabricCanvasInstance.add(
@@ -227,32 +212,50 @@ export default {
         },
         saveStations() {
             const jsonString = JSON.stringify(this.stations, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob); // Specify the format you want (PNG)
-            link.download = 'stations.json'; // Default name for the downloaded file
-            link.click();
-            // Clean up by removing the link and revoking the Object URL
-            URL.revokeObjectURL(link.href);
+            const filePath = 'stations.json'; // Adjust this path as needed
+
+            // Send the JSON data and file path to the main process
+            ipcRenderer.send('save-json-file', { fileName: filePath, jsonData: jsonString });
+
+            // Listen for save status
+            ipcRenderer.on('save-status', (event, response) => {
+                if (response.success) {
+                    console.log('JSON file saved successfully');
+                } else {
+                    console.error('Failed to save JSON file:', response.error);
+                }
+            });
         },
         closePopup() {
             this.showPopup = false;
         },
         onStationMousedown(event) {
-            if (this.tosetStation) {
+            if (this.toSetStation) {
                 const rect = this.$refs.stationEditorOption.getBoundingClientRect();
                 this.stationCanvasX = event.clientX - rect.left;
                 this.stationCanvasY = event.clientY - rect.top;
             }
         },
         loadStations() {
-            for (const key in stationData) {
-                this.stationCounter += 1;
-                this.stations[key] = {
-                    left: stationData[key].left, top: stationData[key].top, angle: stationData[key].angle
+            const filePath = 'stations.json'; // Adjust the path as necessary
+            ipcRenderer.send('load-json-file', filePath);
+
+            // Listen for the response containing the data
+            ipcRenderer.on('json-file-data', (event, response) => {
+                if (response.success) {
+                    const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+                    for (const key in data) {
+                        this.stationCounter += 1;
+                        this.stations[key] = {
+                            left: data[key].left, top: data[key].top, angle: data[key].angle
+                        }
+                        this.setStation(key, this.stations[key].left, this.stations[key].top, this.stations[key].angle, 'blue');
+                    }
+                } else {
+                    console.error('Failed to load station data:', response.error);
                 }
-                this.setStation(key, stationData[key].left, stationData[key].top, stationData[key].angle, 'blue');
-            }
+            });
+
         },
     },
 };

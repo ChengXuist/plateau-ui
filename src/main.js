@@ -1,10 +1,10 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import '@fortawesome/fontawesome-free/css/all.css';
 
 import { createI18n } from 'vue-i18n';
 import { createRouter, createWebHistory } from 'vue-router';
-
 import HomePage from '@/components/Home/HomePage.vue';
 import NavigationPage from '@/components/navigation/NavigationPage.vue';
 import MapEditPage from '@/components/MapEdit/MapEditPage.vue';

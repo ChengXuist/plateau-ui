@@ -25,7 +25,9 @@ export default {
 
 .main-content {
   flex-grow: 1;
-  margin-left: 5vw; /* Matches the width of the sidebar */
-  padding: 5px; /* Add some padding for a clean layout */
+  margin-left: 5vw;
+  /* Matches the width of the sidebar */
+  padding: 5px;
+  /* Add some padding for a clean layout */
 }
 </style>
