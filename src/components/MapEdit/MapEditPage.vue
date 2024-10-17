@@ -1,101 +1,103 @@
 <template>
-    <div class="container"  >
-        <!-- Title at the top -->
-        <h1 class="title">{{ $t('mapEditor') }}</h1>
+<div class="container">
+    <!-- Title at the top -->
+    <h1 class="title">{{ $t('mapEditor') }}</h1>
 
-        <!-- Toggle between Mapping and Map Selection -->
-        <div class="toggle-container">
-            <button class="toggle-button" :class="['toggle-button', { active: activeTab === 'obstacle-editor' }]"
-                @click="activeTab = 'obstacle-editor'">
-                {{ $t('obstacleEditor') }}
-            </button>
-            <button class="toggle-button" :class="['toggle-button', { active: activeTab === 'station-editor' }]"
-                @click="activeTab = 'station-editor'">
-                {{ $t('stationEditor') }}
-            </button>
-        </div>
-
-        <!-- Obstacle Editor -->
-        <div v-show="activeTab === 'obstacle-editor'" ref="obstacleEditorOptions" class="mapping-options" >
-            <div class="drawing-tools mb-3">
-                <button @click="setPanningMode(true)" class="btn btn-outline-secondary me-2">
-                    <i class="fas fa-hand"></i>
-                </button>
-                <button @click="setDrawingMode(true)" class="btn btn-outline-secondary me-2">
-                    <i class="fas fa-paint-brush"></i>
-                </button>
-                <button @click="setDrawingMode(false)" class="btn btn-outline-secondary me-2">
-                    <i class="fas fa-eraser"></i>
-                </button>
-                <button @click="zoom(true)" class="btn btn-outline-secondary">
-                    <i class="fas fa-plus"></i>
-                </button>
-                <button @click="zoom(false)" class="btn btn-outline-secondary">
-                    <i class="fas fa-minus"></i>
-                </button>
-                <button @click="undo" class="btn btn-outline-secondary">
-                    <i class="fas fa-rotate-left"></i>
-                </button>
-                <button @click="clearCanvas(true)" class="btn btn-outline-secondary">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-                <button @click="saveCanvas" class="btn btn-outline-secondary">
-                    <i class="fas fa-save"></i>
-                </button>
-            </div>
-            <canvas ref="editorCanvas" class="obstacle-editor-canvas" width="100%" height="100%"
-                @mousedown="onMousedown" @mousemove="onMouseMove" @mouseup="onMouseUp" @touchstart="onTouchStart"
-                @touchmove="onTouchMove" @touchend="onTouchEnd"></canvas>
-        </div>
-        <div v-show="activeTab === 'station-editor'" class="mapping-options" ref="stationEditorOption" >
-            <div class="drawing-tools mb-3">
-                <button @click="setStationPanningMode(true)" class="btn btn-outline-secondary me-2">
-                    <i class="fas fa-hand"></i>
-                </button>
-                <button @click="addStation()" class="btn btn-outline-secondary me-2">
-                    <i class="fas fa-circle-chevron-up"></i>
-                </button>
-                <button @click="zoomStationCanvas(true)" class="btn btn-outline-secondary">
-                    <i class="fas fa-plus"></i>
-                </button>
-                <button @click="zoomStationCanvas(false)" class="btn btn-outline-secondary">
-                    <i class="fas fa-minus"></i>
-                </button>
-                <button @click="saveStations" class="btn btn-outline-secondary">
-                    <i class="fas fa-save"></i>
-                </button>
-            </div>
-            <canvas id="station-editor-canvas" ref="stationEditorCanvas" class="station-editor-canvas" width="100%"
-                height="100%" @mousedown="onStationMousedown"></canvas>
-        </div>
-        <div v-if="showPopup" class="setStationPopup"
-            :style="{ top: stationSettingPopupY + 'px', left: stationSettingPopupX + 'px' }">
-            {{ $t('editRobotProperty') }}
-            <button @click="closePopup" class="close-button">&times;</button>
-            <label for="angle">{{ $t('angle') }}:&nbsp;{{ selectedStation.angle }}&nbsp;&nbsp;</label>
-            <label for="left">{{ $t('left') }} (X):&nbsp;{{ selectedStation.left }}&nbsp;&nbsp;</label>
-            <label for="top">{{ $t('top') }} (Y):&nbsp;{{ selectedStation.left }}&nbsp;&nbsp;</label>
-            <div class="controls">
-                <button @click="rotateStation('left')" class="btn btn-outline-secondary">
-                    <i class="fas fa-rotate-left"></i>
-                </button>
-                <button @click="rotateStation('right')" class="btn btn-outline-secondary">
-                    <i class="fas fa-rotate-right"></i>
-                </button>
-                <button @click="confirmStation" class="btn btn-outline-secondary">Confirm</button>
-                <button @click="removeStation" class="btn btn-outline-secondary">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </div>
-            <div class="action-buttons">
-            </div>
-        </div>
+    <!-- Toggle between Mapping and Map Selection -->
+    <div class="toggle-container">
+        <button class="toggle-button" :class="['toggle-button', { active: activeTab === 'obstacle-editor' }]" @click="activeTab = 'obstacle-editor'">
+            {{ $t('obstacleEditor') }}
+        </button>
+        <button class="toggle-button" :class="['toggle-button', { active: activeTab === 'station-editor' }]" @click="activeTab = 'station-editor'">
+            {{ $t('stationEditor') }}
+        </button>
     </div>
+
+    <!-- Obstacle Editor -->
+    <div v-show="activeTab === 'obstacle-editor'" ref="obstacleEditorOptions" class="mapping-options">
+        <div class="drawing-tools mb-3">
+            <button @click="setPanningMode(true)" class="btn blue-button btn-outline-secondary me-2">
+                <i class="fas fa-hand"></i>
+            </button>
+            <button @click="setDrawingMode(true)" class="btn blue-button btn-outline-secondary me-2">
+                <i class="fas fa-paint-brush"></i>
+            </button>
+            <button @click="setDrawingMode(false)" class="btn blue-button btn-outline-secondary me-2">
+                <i class="fas fa-eraser"></i>
+            </button>
+            <button @click="zoom(true)" class="btn blue-button btn-outline-secondary">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button @click="zoom(false)" class="btn blue-button btn-outline-secondary">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button @click="undo" class="btn blue-button btn-outline-secondary">
+                <i class="fas fa-rotate-left"></i>
+            </button>
+            <button @click="clearCanvas(true)" class="btn blue-button btn-outline-secondary">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+            <button @click="saveCanvas" class="btn blue-button btn-outline-secondary">
+                <i class="fas fa-save"></i>
+            </button>
+        </div>
+        <canvas ref="editorCanvas" class="obstacle-editor-canvas" width="100%" height="100%" @mousedown="onMousedown" @mousemove="onMouseMove" @mouseup="onMouseUp" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd"></canvas>
+    </div>
+    <div v-show="activeTab === 'station-editor'" class="mapping-options" ref="stationEditorOption">
+        <div class="drawing-tools mb-3">
+            <button @click="setStationPanningMode(true)" class="btn blue-button btn-outline-secondary me-2">
+                <i class="fas fa-hand"></i>
+            </button>
+            <button @click="addStation()" class="btn blue-button btn-outline-secondary me-2">
+                <i class="fas fa-circle-chevron-up"></i>
+            </button>
+            <button @click="zoomStationCanvas(true)" class="btn blue-button btn-outline-secondary">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button @click="zoomStationCanvas(false)" class="btn blue-button btn-outline-secondary">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button @click="saveStations" class="btn blue-button btn-outline-secondary">
+                <i class="fas fa-save"></i>
+            </button>
+        </div>
+        <canvas id="station-editor-canvas" ref="stationEditorCanvas" class="station-editor-canvas" width="100%" height="100%" @mousedown="onStationMousedown"></canvas>
+    </div>
+    <div v-if="showPopup" class="setStationPopup">
+        {{ $t('editRobotProperty') }}
+        <button @click="closePopup" class="close-button">&times;</button>
+        <div>
+            <label for="stationName">{{ $t('stationName') }}&nbsp;:</label>
+            <input v-model="selectedStationName" id="stationName" type="text" class="form-control" @focus="openKeyboard" />
+        </div>
+        <div v-if="usedNameWarningMessage">
+            <label for="usedNameWarningMessage" class="text-danger">{{ usedNameWarningMessage }}</label>
+        </div>
+        <div>
+            <label for="angle">{{ $t('angle') }}:&nbsp;{{ selectedStation.angle }}&nbsp;&nbsp;</label>
+        </div>
+        <div class="controls">
+            <button @click="rotateStation('left')" class="btn btn-outline-secondary">
+                <i class="fas fa-rotate-left"></i>
+            </button>
+            <button @click="rotateStation('right')" class="btn btn-outline-secondary">
+                <i class="fas fa-rotate-right"></i>
+            </button>
+            <button @click="confirmStation" class="btn btn-outline-secondary">Confirm</button>
+            <button @click="removeStation" class="btn btn-outline-secondary">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+        <div class="action-buttons"></div>
+    </div>
+</div>
+<VirtualKeyboard @key-press="handleKeyPress" ref="keyboard" />
 </template>
 
 <script>
 import obstacleEditor from '@/script/MapEdit/obstacleEditor.js';
 import stationEditor from '@/script/MapEdit/stationEditor.js';
+
 export default {
     name: 'MapEdit',
     mixins: [obstacleEditor, stationEditor], // Use mixins to integrate the logic
@@ -103,6 +105,29 @@ export default {
 </script>
 
 <style scoped>
+.keyboard {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #f9f9f9;
+    border-top: 1px solid #ccc;
+    z-index: 100;
+    /* Ensure it's on top of other elements */
+    padding: 10px;
+}
+
+.keyboard .keyboard-row {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 10px;
+}
+
+.keyboard button {
+    padding: 10px;
+    font-size: 1.2em;
+}
+
 /* Container for the entire page */
 .container {
     display: flex;
@@ -180,12 +205,20 @@ export default {
 }
 
 .setStationPopup {
-    background-color: lightgray;
-    padding: 20px;
-    border-radius: 5px;
-    width: 300px;
     position: absolute;
+    top: 3%;
+    /* Adjust this value to control how far from the top the popup should appear */
+    left: 50%;
+    /* Align to the center of the screen */
+    transform: translateX(-50%);
+    /* Move it back by half of its own width for perfect centering */
+    background-color: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     z-index: 100;
+    width: 350px;
+    /* Define a width for the popup */
 }
 
 .controls {
@@ -219,4 +252,20 @@ export default {
 .close-button:hover {
     color: darkred;
 }
+
+.text-danger {
+    color: red;
+    /* Or any other style you prefer */
+    font-weight: bold;
+    /* Optional */
+}
+
+.blue-button {
+    background-color: #23648a;
+    color: white;
+    border-color: #23648a;
+    border-radius: 6px;
+    width: 50px;
+}
+
 </style>

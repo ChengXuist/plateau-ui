@@ -15,7 +15,6 @@ export default {
             x: null,
             y: null,
             lineWidth: 3,
-
             canversOffSet: 0,
 
             activeTab: 'obstacle-editor',

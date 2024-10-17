@@ -11,8 +11,9 @@
     "moveTo": "Move To",
     "backToHome": "Back to Home",
     "stationEditor": "Station Editor",
-    "editRobotProperty": "Edit Robot Property",
+    "editRobotProperty": "Edit Robot",
     "angle": "Angle",
     "left": "Left",
-    "top": "Top"
+    "top": "Top",
+    "stationName": "Station Name "
 }

@@ -4,7 +4,7 @@
         <div class="sidebar-content">
             <div class="nav-item">
                 <router-link class="nav-link" to="/">
-                    <i class="bi bi-house"></i> <!-- Home Icon -->
+                    <i class="bi bi-house "></i> <!-- Home Icon -->
                 </router-link>
             </div>
             <div class="nav-item">
@@ -34,7 +34,7 @@ export default {
 
 <style scoped>
 .sidebar {
-    width: 30px;
+    width: 40px;
     /* Minimum width to prevent being too small on smaller screens */
     height: 100%;
     /* 100% of the viewport height */
@@ -64,7 +64,7 @@ export default {
 }
 
 .nav-link i {
-    font-size: 1.8rem;
+    font-size: 2.2rem;
 }
 
 .sidebar-content {

@@ -1,7 +1,11 @@
 import * as fabric from 'fabric';
+import VirtualKeyboard from '@/components/shared/VirtualKeyboard.vue';
 const { ipcRenderer } = window.require('electron');
 
 export default {
+    components: {
+        VirtualKeyboard
+    },
     data() {
         return {
             toSetStation: false,
@@ -21,6 +25,7 @@ export default {
 
             stationSettingPopupX: null,
             stationSettingPopupY: null,
+            popupHeight: 200,
 
             popupOffSet: 5,
             stations: {},
@@ -44,6 +49,10 @@ export default {
             canvasWidth: 0,
             canvasHeight: 0,
             newStationYoffset: 15,
+            selectedStationName: '',
+
+            usedNameWarningMessage: '',
+            stationScale: 0.03,
         };
     },
     mounted() {
@@ -53,6 +62,21 @@ export default {
     },
 
     methods: {
+        openKeyboard() {
+            this.$refs.keyboard.openKeyboard();
+        },
+        handleKeyPress(key) {
+            if (key === 'Backspace') {
+                this.selectedStationName = this.selectedStationName.slice(0, -1);
+            } else if (key === 'Space') {
+                this.selectedStationName += ' ';
+            } else {
+                if (this.selectedStationName === 'undefined') {
+                    this.selectedStationName = ''
+                }
+                this.selectedStationName += key;
+            }
+        },
         initCanvas() {
             ipcRenderer.send('load-image-file', this.mapFile);
             ipcRenderer.on('image-file-data', (event, response) => {
@@ -131,17 +155,16 @@ export default {
             this.fabricCanvasInstance.on('mouse:up', () => {
                 this.isPanningMouseDown = false;
                 this.fabricCanvasInstance.selection = true; // Re-enable object selection
-
+                this.selectedStationName = ''
                 const activeObject = this.fabricCanvasInstance.getActiveObject();
                 if (activeObject) {
                     this.isPanning = false;
                     // Open the popup and populate it with the active object's properties
                     this.selectedStation = activeObject;
                     this.stationProperties.angle = activeObject.angle;
-                    this.stationProperties.left = activeObject.left;
-                    this.stationProperties.top = activeObject.top;
-                    this.stationSettingPopupY = activeObject.top - this.popupOffSet;
-                    this.stationSettingPopupX = activeObject.left + this.popupOffSet;
+                    this.selectedStationName = activeObject.id;
+                    this.usedNameWarningMessage = ''
+
                     this.showPopup = true;
                 }
             });
@@ -168,15 +191,23 @@ export default {
             }
         },
         addStation() {
+            this.toAdd = true;
+            this.selectedStationName = '';
             this.isPanning = false;
             this.toSetStation = true;
             this.stationCounter += 1;
-            let id = "station_" + this.stationCounter
-            this.setStation(id, this.canvasWidth / 2, -1 * this.fabricCanvasInstance.viewportTransform[5] + this.newStationYoffset, 0, 'black');
+            let id = ''
+            this.setStation(id, this.canvasWidth / 2, -1 * this.fabricCanvasInstance.viewportTransform[5] + this.newStationYoffset, 0.);
+            this.usedNameWarningMessage = ''
+
+            this.showPopup = true;
         },
-        setStation(id, left, top, angle, color) {
-            this.fabricCanvasInstance.add(
-                new fabric.Circle({
+        setStation(id, left, top, angleN) {
+            const image = new Image();
+            image.src = `./stations/station.png`;
+            image.onload = () => {
+
+                const newStation = new fabric.FabricImage(image, {
                     id: id,
                     originX: "center",
                     originY: "center",
@@ -186,29 +217,52 @@ export default {
                     selectable: true,
                     evented: true,
                     radius: 10,
-                    angle: angle,
-                    fill: color,
+                    angle: angleN,
                 })
-            );
+                newStation.scaleX = this.stationScale;
+                newStation.scaleY = this.stationScale;
+                this.fabricCanvasInstance.add(newStation);
+                this.fabricCanvasInstance.setActiveObject(newStation);
+                this.selectedStation = newStation;
+                this.fabricCanvasInstance.renderAll();
+            };
+
         },
         confirmStation() {
+            if (this.selectedStationName !== this.selectedStation.id) {
+                if (this.selectedStationName in this.stations) {
+                    this.usedNameWarningMessage = 'This station ID already exists!';
+                    return;
+                } else {
+                    this.usedNameWarningMessage = ''; // Clear the warning if the ID doesn't exist
+                }
+            }
+
+            if (this.selectedStationName != '') {
+                this.selectedStation.id = this.selectedStationName
+            } else {
+                this.selectedStation.id = 'station' + this.stationCounter;
+            }
             this.stations[this.selectedStation.id] = {
                 angle: this.selectedStation.angle,
                 top: this.selectedStation.top,
                 left: this.selectedStation.left
             };
 
-            this.fabricCanvasInstance.getActiveObject().set('fill', 'blue');
             this.fabricCanvasInstance.renderAll();
             this.showPopup = false;
+            this.$refs.keyboard.closeKeyboard();
         },
         removeStation() {
             if (this.selectedStation) {
                 this.fabricCanvasInstance.remove(this.selectedStation);
                 this.fabricCanvasInstance.discardActiveObject(); // Clear selection
-                this.fabricCanvasInstance.renderAll(); // Re-render canvas
-                this.showPopup = false;
+                delete this.stations[this.selectedStation.id];
             }
+            this.showPopup = false;
+            this.selectedStation = null;
+            this.fabricCanvasInstance.renderAll(); // Re-render canvas
+            this.$refs.keyboard.closeKeyboard();
         },
         saveStations() {
             const jsonString = JSON.stringify(this.stations, null, 2);
@@ -216,8 +270,6 @@ export default {
 
             // Send the JSON data and file path to the main process
             ipcRenderer.send('save-json-file', { fileName: filePath, jsonData: jsonString });
-
-            // Listen for save status
             ipcRenderer.on('save-status', (event, response) => {
                 if (response.success) {
                     console.log('JSON file saved successfully');
@@ -225,9 +277,14 @@ export default {
                     console.error('Failed to save JSON file:', response.error);
                 }
             });
+            this.$refs.keyboard.closeKeyboard();
         },
         closePopup() {
+            if (this.selectedStation.id == '') {
+                this.removeStation();
+            }
             this.showPopup = false;
+            this.$refs.keyboard.closeKeyboard();
         },
         onStationMousedown(event) {
             if (this.toSetStation) {
@@ -240,22 +297,23 @@ export default {
             const filePath = 'stations.json'; // Adjust the path as necessary
             ipcRenderer.send('load-json-file', filePath);
 
-            // Listen for the response containing the data
             ipcRenderer.on('json-file-data', (event, response) => {
                 if (response.success) {
                     const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
                     for (const key in data) {
                         this.stationCounter += 1;
-                        this.stations[key] = {
-                            left: data[key].left, top: data[key].top, angle: data[key].angle
+                        if (!(key in this.stations)) {
+                            this.stations[key] = {
+                                left: data[key].left, top: data[key].top, angle: data[key].angle
+                            }
+                            this.setStation(key, this.stations[key].left, this.stations[key].top, this.stations[key].angle);
+                            console.log(this.stationCounter)
                         }
-                        this.setStation(key, this.stations[key].left, this.stations[key].top, this.stations[key].angle, 'blue');
                     }
                 } else {
                     console.error('Failed to load station data:', response.error);
                 }
             });
-
         },
     },
 };

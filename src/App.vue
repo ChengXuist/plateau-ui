@@ -22,6 +22,9 @@ export default {
 #app {
   display: flex;
 }
+html, body {
+  /* cursor: none; */
+}
 
 .main-content {
   flex-grow: 1;
