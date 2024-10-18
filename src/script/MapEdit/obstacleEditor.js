@@ -5,7 +5,7 @@ export default {
     data() {
         return {
             selectedMode: 'obstacle-editor', // Default mode
-            isDrawing: false,
+            isGray: false,
             scaleRate: 1.0,
 
             panX: 0, // Pan offset X
@@ -14,14 +14,15 @@ export default {
             isMouseDown: false,
             x: null,
             y: null,
-            lineWidth: 3,
+            eraserWidth: 6,
+            lineWidth: 4,
             canversOffSet: 0,
 
             activeTab: 'obstacle-editor',
             mapFileName: 'first_map_user.png', // This can be dynamic
             fabricObstacleCanvasInstance: null,
-            canvasWidth: 0,
-            canvasHeight: 0,
+            canvasObsWidth: 0,
+            canvasObsHeight: 0,
 
             isPanning: false, // Flag to track panning mode
             isPanningMouseDown: false, // Flag to track panning mode
@@ -36,19 +37,78 @@ export default {
             maxZoom: 3, // Max zoom level
             minZoom: 0.5, // Min zoom level
 
-            imageHeight: 0.,
-            imageWidth: 0,
+            linePoints: [],
+            lineTempPoint: null,
+
+            showEraserPopup: false,
+            eraserSize: 5,
+            currentEraserSize: 5,
+            imageObsWidth: 0,
+            imageObsHeight: 0,
+            imageObsOriginalWidth: 0,
+            imageObsOriginalHeight: 0,
         };
     },
     methods: {
+        confirmEraserSize() {
+            this.currentEraserSize = this.eraserSize;
+            this.showEraserPopup = false; // Close the popup after confirmation
+            this.fabricObstacleCanvasInstance.freeDrawingBrush.width = this.currentEraserSize;  // Brush width (in pixels)
+        },
+        cancelEraserSize() {
+            this.showEraserPopup = false;
+            this.eraserSize = this.currentEraserSize;
+        },
         setPanningMode(isPanning) {
             this.isPanning = isPanning;
             this.fabricObstacleCanvasInstance.isDrawingMode = !isPanning;
+            this.isDrawLineMode = false;
         },
-        setDrawingMode(isDrawing) {
-            this.fabricObstacleCanvasInstance.freeDrawingBrush.color = (isDrawing) ? '#000000' : '#ffffff';  // Brush color
+        setDrawlineMode() {
+            this.fabricObstacleCanvasInstance.freeDrawingBrush.color = '#ffffff';
+            this.isDrawLineMode = true;
+            this.fabricObstacleCanvasInstance.isDrawingMode = false;
+        },
+        addTempPoint(x, y) {
+            this.lineTempPoint = new fabric.Circle({
+                left: x,
+                top: y,
+                radius: 3,
+                fill: 'red',
+                selectable: false, // Make sure the point is not selectable
+                originX: 'center',
+                originY: 'center',
+                isTemporary: true,
+            });
+
+            this.fabricObstacleCanvasInstance.add(this.lineTempPoint);
+            this.fabricObstacleCanvasInstance.renderAll();
+        },
+        removeTempPoint() {
+            // Remove the temporary point from the canvas
+            if (this.lineTempPoint) {
+                this.fabricObstacleCanvasInstance.remove(this.lineTempPoint);
+                this.lineTempPoint = null;
+            }
+        },
+        drawLine() {
+            const [point1, point2] = this.linePoints;
+            const line = new fabric.Line(
+                [point1.x, point1.y, point2.x, point2.y],
+                {
+                    stroke: 'black',
+                    strokeWidth: this.lineWidth,
+                }
+            );
+            this.fabricObstacleCanvasInstance.add(line);
+            this.fabricObstacleCanvasInstance.renderAll();
+        },
+        setEraserMode(isGray) {
+            this.fabricObstacleCanvasInstance.freeDrawingBrush.color = (isGray) ? '#cccccc' : '#ffffff';  // Brush color
             this.isPanning = false;
             this.fabricObstacleCanvasInstance.isDrawingMode = true;
+            this.isDrawLineMode = false;
+            this.showEraserPopup = true
         },
         getCoordinate(event) {
             let coordinates = this.$refs.VueCanvasDrawing.getCoordinates(event);
@@ -58,14 +118,12 @@ export default {
         clearCanvas(unstack) {
             this.panX = 0;
             this.panY = 0;
-            this.scaleRate = 1.0;
             if (unstack) {
                 while (this.undoStack.length > 0) {
                     const lastObject = this.undoStack.pop();  // Get the last object from the stack
                     this.fabricObstacleCanvasInstance.remove(lastObject);  // Remove it from the canvas
                 }
             }
-
             this.zoomLevel = 1.0
             let vpt = this.fabricObstacleCanvasInstance.viewportTransform;
             vpt[4] = 0;
@@ -73,12 +131,15 @@ export default {
             this.fabricObstacleCanvasInstance.setZoom(this.zoomLevel);
             this.fabricObstacleCanvasInstance.renderAll();
         },
-
         saveCanvas() {
             this.clearCanvas(false)
-            this.fabricObstacleCanvasInstance.setHeight(this.imageHeight);
-            this.fabricObstacleCanvasInstance.setWidth(this.imageWidth);
-            this.fabricImage.left = 0;
+            this.fabricObstacleCanvasInstance.setHeight(this.imageObsOriginalHeight);
+            this.fabricObstacleCanvasInstance.setWidth(this.imageObsOriginalWidth);
+            let vpt = this.fabricObstacleCanvasInstance.viewportTransform;
+            vpt[4] = -(this.canvasObsWidth - this.imageObsWidth) / 2;
+
+            this.fabricObstacleCanvasInstance.setZoom(this.imageObsOriginalWidth / this.imageObsWidth);
+            this.fabricObstacleCanvasInstance.renderAll();
 
             const dataURL = this.fabricObstacleCanvasInstance.toDataURL({
                 format: 'png',
@@ -90,9 +151,11 @@ export default {
                 fileName: 'canvas-image.png',  // You can dynamically set the file name
                 data: base64Data  // Send the base64 string without the prefix
             });
-            this.fabricImage.left = this.imageOffset;
-            this.fabricObstacleCanvasInstance.setHeight(this.canvasHeight);
-            this.fabricObstacleCanvasInstance.setWidth(this.canvasWidth);
+            this.fabricObstacleCanvasInstance.setHeight(this.canvasObsHeight);
+            this.fabricObstacleCanvasInstance.setWidth(this.canvasObsWidth);
+            this.fabricObstacleCanvasInstance.viewportTransform[4] = 0;
+            this.fabricObstacleCanvasInstance.setZoom(this.imageObsWidth / this.imageObsOriginalWidth);
+            this.fabricObstacleCanvasInstance.renderAll();
         },
         loadEditorImage() {
             ipcRenderer.send('load-image-file', this.mapFileName);
@@ -102,23 +165,45 @@ export default {
                         const base64Image = response.data;
                         const image = new Image();
                         image.src = `data:image/png;base64,${base64Image}`;
+
                         image.onload = () => {
-                            this.imageOffset = (this.canvasWidth - image.width) / 2;
+                            // Calculate the ratio to maintain the original aspect ratio
+                            const imageAspectRatio = image.width / image.height;
+                            const canvasAspectRatio = this.canvasObsWidth / this.canvasObsHeight;
+                            this.imageObsOriginalWidth = image.width;
+                            this.imageObsOriginalHeight = image.height;
+
+                            // Fit to canvas width
+                            if (canvasAspectRatio > imageAspectRatio) {
+                                // If canvas is wider, fit to height
+                                this.imageObsHeight = this.canvasObsHeight;
+                                this.imageObsWidth = this.imageObsHeight * imageAspectRatio;
+                            } else {
+                                // If canvas is taller, fit to width
+                                this.imageObsWidth = this.canvasObsWidth;
+                                this.imageObsHeight = this.imageObsWidth / imageAspectRatio;
+                            }
+
+                            // this.imageOffset = (this.canvasObsWidth - image.width) / 2;
                             this.fabricImage = new fabric.FabricImage(image, {
-                                left: this.imageOffset, // Horizontal offset
+                                left: (this.canvasObsWidth - this.imageObsWidth) / 2, // Center the image vertically
+                                scaleX: this.imageObsWidth / image.width, // Scale X based on original width
+                                scaleY: this.imageObsHeight / image.height, // Scale Y based on original height
                             })
-                            this.fabricObstacleCanvasInstance = new fabric.Canvas(this.$refs.editorCanvas, {
-                                width: this.canvasWidth,
-                                height: this.canvasHeight,
-                                backgroundImage: this.fabricImage,
-                            })
-                            this.imageHeight = image.height;
-                            this.imageWidth = image.width;
+                            if (this.fabricObstacleCanvasInstance === null) {
+                                this.fabricObstacleCanvasInstance = new fabric.Canvas(this.$refs.editorCanvas, {
+                                    width: this.canvasObsWidth,
+                                    height: this.canvasObsHeight,
+                                    backgroundImage: this.fabricImage,
+                                })
+                            }
+
                             this.fabricObstacleCanvasInstance.selection = false;
                             this.initDrawding();
                             this.initPanning();
                             this.initUndo();
                             this.fabricObstacleCanvasInstance.renderAll()
+
                         };
                     } else {
                         console.error('Failed to load image:', response.error);
@@ -129,7 +214,7 @@ export default {
         initDrawding() {
             this.fabricObstacleCanvasInstance.isDrawingMode = false;
             this.fabricObstacleCanvasInstance.freeDrawingBrush = new fabric.PencilBrush(this.fabricObstacleCanvasInstance);
-            this.fabricObstacleCanvasInstance.freeDrawingBrush.width = this.lineWidth;  // Brush width (in pixels)
+            this.fabricObstacleCanvasInstance.freeDrawingBrush.width = this.currentEraserSize;  // Brush width (in pixels)
         },
         initPanning() {
             this.fabricObstacleCanvasInstance.on('mouse:down', (opt) => {
@@ -146,11 +231,27 @@ export default {
                         this.lastPosY = evt.changedTouches[0].clientY;
                     }
                 }
+                if (this.isDrawLineMode) {
+                    const pointer = this.fabricObstacleCanvasInstance.getPointer(opt.e);
+                    const { x, y } = pointer;
+
+                    // Store the points on click
+                    this.linePoints.push({ x, y });
+                    if (this.linePoints.length === 1) {
+                        this.addTempPoint(x, y);
+                    }
+
+                    // Once two points are selected, draw the line
+                    if (this.linePoints.length === 2) {
+                        this.drawLine();
+                        this.linePoints = []; // Reset points after drawing
+                        this.removeTempPoint();
+                    }
+                }
             });
 
             this.fabricObstacleCanvasInstance.on('mouse:move', (opt) => {
                 if (this.isPanning) {
-                    console.log(opt.e)
                     if (opt.e && this.isPanningMouseDown === true) {
                         const evt = opt.e;
                         let x, y;
@@ -184,7 +285,7 @@ export default {
         initUndo() {
             this.fabricObstacleCanvasInstance.on('object:added', (event) => {
                 const object = event.target;
-                if (object) {
+                if (object && !object.isTemporary) {
                     this.undoStack.push(object);  // Add the object to the undo stack
                 }
             });
@@ -212,8 +313,7 @@ export default {
     },
     mounted() {
         this.loadEditorImage();
-        this.canvasWidth = this.$refs.obstacleEditorOptions.getBoundingClientRect().width;
-        this.canvasHeight = this.$refs.obstacleEditorOptions.getBoundingClientRect().height;
-        // this.saveData();
+        this.canvasObsWidth = this.$refs.obstacleEditorOptions.getBoundingClientRect().width;
+        this.canvasObsHeight = this.$refs.obstacleEditorOptions.getBoundingClientRect().height;
     }
 };

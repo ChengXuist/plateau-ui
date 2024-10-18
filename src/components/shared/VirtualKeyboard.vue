@@ -1,12 +1,13 @@
 <template>
-<div class="keyboard" v-if="visible">
-    <div class="keyboard-row" v-for="(row, index) in keys" :key="index">
-        <button v-for="key in row" :key="key" @click="keyPressed(key)" @touchstart="keyPressed(key)" :class="['key', {'large-key': key === 'Space'} , {'large-key':  key === 'Backspace'} ]">
-            {{ key }}
-        </button>
+    <div class="keyboard" v-if="visible">
+        <div class="keyboard-row" v-for="(row, index) in keys" :key="index">
+            <button v-for="key in row" :key="key" @click="keyPressedWithClick(key)" @touchstart="keyPressedWithTouch(key)"
+                :class="['key', { 'large-key': key === 'Space' }, { 'large-key': key === 'Backspace' }]">
+                {{ key }}
+            </button>
+        </div>
+        <button class="close-button" @click="closeKeyboard" @touchstart="closeKeyboard">Close Keyboard</button>
     </div>
-    <button class="close-button" @click="closeKeyboard" @touchstart="closeKeyboard">Close Keyboard</button>
-</div>
 </template>
 
 <script>
@@ -27,13 +28,24 @@ export default {
         keyPressed(key) {
             this.$emit('key-press', key);
         },
+        keyPressedWithClick(key) {
+            if (!this.touchHandled) {
+                this.keyPressed(key);
+            }
+            this.touchHandled = false;  // Reset flag after the click event
+        },
+        keyPressedWithTouch(event, key) {
+            event.preventDefault();  // Prevent the subsequent 'click' event
+            this.touchHandled = true;
+            this.keyPressed(key);
+        },
         closeKeyboard() {
             this.visible = false;
         },
         openKeyboard() {
             this.visible = true;
         },
-        
+
     }
 };
 </script>
@@ -59,11 +71,6 @@ export default {
     margin-bottom: 10px;
 }
 
-button {
-    padding: 5px;
-    font-size: 1.5em;
-}
-
 .key {
     width: 55px;
     height: 55px;
@@ -80,6 +87,7 @@ button {
     height: 55px;
     /* Same height to keep consistency */
 }
+
 .large-key2 {
     width: 150px;
     /* Wider button for Space and Back */

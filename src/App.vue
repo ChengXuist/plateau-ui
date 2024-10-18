@@ -33,4 +33,10 @@ html, body {
   padding: 5px;
   /* Add some padding for a clean layout */
 }
+
+button {
+    padding: 5px;
+    font-size: 2.2em;
+}
+
 </style>

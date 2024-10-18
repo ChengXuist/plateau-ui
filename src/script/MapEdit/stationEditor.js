@@ -53,6 +53,9 @@ export default {
 
             usedNameWarningMessage: '',
             stationScale: 0.03,
+
+            imageOriginalWidth: 0,
+            imageOriginalHeight: 0,
         };
     },
     mounted() {
@@ -85,9 +88,26 @@ export default {
                     const image = new Image();
                     image.src = `data:image/png;base64,${base64Image}`;
                     image.onload = () => {
-                        this.imageOffset = (this.canvasWidth - image.width) / 2;
+                        // Calculate the ratio to maintain the original aspect ratio
+                        const imageAspectRatio = image.width / image.height;
+                        const canvasAspectRatio = this.canvasWidth / this.canvasHeight;
+
+                        // Fit to canvas width
+                        if (canvasAspectRatio > imageAspectRatio) {
+                            // If canvas is wider, fit to height
+                            this.imageOriginalHeight = this.canvasHeight;
+                            this.imageOriginalWidth = this.imageOriginalHeight * imageAspectRatio;
+                        } else {
+                            // If canvas is taller, fit to width
+                            this.imageOriginalWidth = this.canvasWidth;
+                            this.imageOriginalHeight = this.imageOriginalWidth / imageAspectRatio;
+                        }
+
                         this.fabricImage = new fabric.FabricImage(image, {
-                            left: this.imageOffset, // Horizontal offset
+                            left: (this.canvasWidth - this.imageOriginalWidth) / 2, // Center the image horizontally
+                            top: (this.canvasHeight - this.imageOriginalHeight) / 2, // Center the image vertically
+                            scaleX: this.imageOriginalWidth / image.width, // Scale X based on original width
+                            scaleY: this.imageOriginalHeight / image.height, // Scale Y based on original height
                         })
                         if (this.fabricCanvasInstance === null) {
                             this.fabricCanvasInstance = new fabric.Canvas(this.$refs.stationEditorCanvas, {
@@ -107,6 +127,17 @@ export default {
         },
         setStationPanningMode() {
             this.isPanning = true;
+        },
+        autoFit() {
+            this.panX = 0;
+            this.panY = 0;
+            this.scaleRate = 1.0;
+            this.zoomLevel = 1.0
+            let vpt = this.fabricCanvasInstance.viewportTransform;
+            vpt[4] = 0;
+            vpt[5] = 0;
+            this.fabricCanvasInstance.setZoom(this.zoomLevel);
+            this.fabricCanvasInstance.renderAll();
         },
         setupCanvasPanning() {
             // Handle mouse down event (start panning)
